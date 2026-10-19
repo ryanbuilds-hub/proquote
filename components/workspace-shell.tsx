@@ -6,11 +6,11 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 const links = [
-  { href: "/dashboard", label: "Overview" },
-  { href: "/clients", label: "Clients" },
-  { href: "/quotes", label: "Quotes" },
-  { href: "/settings", label: "Business details" },
-  { href: "/billing", label: "Subscription" },
+  { href: "/dashboard", label: "Home", symbol: "H" },
+  { href: "/clients", label: "Clients", symbol: "C" },
+  { href: "/quotes", label: "Quotes", symbol: "Q" },
+  { href: "/settings", label: "Business profile", symbol: "B" },
+  { href: "/billing", label: "Billing", symbol: "€" },
 ];
 
 export function WorkspaceShell({
@@ -48,25 +48,35 @@ export function WorkspaceShell({
           <span><strong>{businessName}</strong><small>Business workspace</small></span>
         </div>
         <nav className="main-nav" aria-label="Main navigation">
+          <p className="nav-caption">YOUR WORKSPACE</p>
           {links.map((link) => (
             <Link
               className={`nav-link${pathname === link.href || pathname.startsWith(`${link.href}/`) ? " active" : ""}`}
               href={link.href}
               key={link.href}
             >
-              {link.label}
+              <span className="nav-symbol" aria-hidden="true">{link.symbol}</span>
+              <span>{link.label}</span>
             </Link>
           ))}
           {isPlatformAdmin && (
-            <Link
-              className={`nav-link${pathname.startsWith("/admin") ? " active" : ""}`}
-              href="/admin"
-            >
-              Platform accounts
-            </Link>
+            <div className="owner-nav">
+              <p className="nav-caption">OWNER ONLY</p>
+              <Link
+                className={`nav-link${pathname.startsWith("/admin") ? " active owner-link" : " owner-link"}`}
+                href="/admin"
+              >
+                <span className="nav-symbol owner-symbol" aria-hidden="true">✦</span>
+                <span>Owner dashboard</span>
+              </Link>
+            </div>
           )}
         </nav>
         <div className="sidebar-bottom">
+          <div className="sidebar-tip">
+            <span aria-hidden="true">✦</span>
+            <p><strong>Quick tip</strong><br />Save a client once, then attach them to every quote.</p>
+          </div>
           <p>Quote simply. Get back to work.</p>
           <button className="signout-button" onClick={signOut} disabled={signingOut}>
             {signingOut ? "Signing out…" : "Sign out"}

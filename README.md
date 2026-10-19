@@ -1,6 +1,6 @@
 # ProQuote
 
-ProQuote is a subscription-ready MVP for tradespeople. Each authenticated account owns a private business workspace with a client directory, business details, and saved quotes. Quote pricing preserves the supplied calculator's labour, call-out, materials markup, Irish VAT choices, euro formatting, copy, and WhatsApp sharing behavior.
+ProQuote is a subscription-ready MVP for tradespeople. Each authenticated account owns a private business workspace with a guided dashboard, a client directory, business details, and saved quotes. Quote pricing preserves the supplied calculator's labour, call-out, materials markup, Irish VAT choices, euro formatting, copy, and WhatsApp sharing behavior.
 
 The app uses Next.js, Supabase Auth/Postgres with row-level security (RLS), and Stripe Checkout/Customer Portal. Billing is **not live until you configure your own Supabase and Stripe projects**. This repository does not deploy the app or create those external accounts.
 
@@ -31,7 +31,17 @@ Checkout uses Stripe-hosted payment collection. Only webhook-signature-verified 
 - Each Supabase Auth user has one business account in this MVP. A signup trigger creates that account from the business name entered at registration.
 - The authenticated user's business ID is derived server-side. RLS policies independently restrict business data by owner and active subscription; client-supplied IDs do not grant access to another account.
 - Clients and quotes are inaccessible through RLS until subscription status is active or trialing. Canceling or losing a subscription blocks access without deleting records.
-- A platform owner's Supabase Auth `app_metadata` must contain `"platform_admin": true` (set through a trusted Supabase administrative interface, never user-editable metadata). The owner dashboard can view business account details and Stripe status, and suspend/restore workspace access. Its policies and UI do not grant access to client or quote records.
+- Owner access is granted to one specific Supabase Auth user ID in the private `platform_owner` table. After creating your own account, run the following once in the Supabase SQL Editor, replacing the example with your account email:
+
+  ```sql
+  insert into public.platform_owner (singleton, user_id)
+  select true, id from auth.users
+  where lower(email) = lower('you@example.com')
+  on conflict (singleton) do update set user_id = excluded.user_id
+  returning user_id;
+  ```
+
+  Confirm one row is returned. The single-row table is inaccessible to normal app users; RLS checks the signed-in user against this allowlist for both the owner page and owner-only account controls. The owner dashboard can view business account details and Stripe status, and suspend/restore workspace access. Its policies and UI do not grant access to client or quote records. Running the SQL again for a different email transfers owner access to that one account.
 - The app's in-product owner controls do not change Stripe subscription status. The verified Stripe webhook is the source of truth for billing.
 
 ## Environment variables

@@ -125,6 +125,17 @@ create trigger on_auth_user_created
 after insert on auth.users
 for each row execute function public.handle_new_user();
 
+create table public.platform_owner (
+  singleton boolean primary key default true check (singleton),
+  user_id uuid not null unique references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+
+alter table public.platform_owner enable row level security;
+revoke all on public.platform_owner from public, anon, authenticated;
+comment on table public.platform_owner is
+  'Single-account platform owner allowlist. Manage only through trusted database administration.';
+
 create or replace function public.is_platform_admin()
 returns boolean
 language sql
@@ -132,7 +143,12 @@ stable
 security definer
 set search_path = ''
 as $$
-  select coalesce((auth.jwt() -> 'app_metadata' ->> 'platform_admin') = 'true', false);
+  select exists (
+    select 1
+    from public.platform_owner owner_account
+    where owner_account.singleton
+      and owner_account.user_id = (select auth.uid())
+  );
 $$;
 
 create or replace function public.protect_business_suspension()

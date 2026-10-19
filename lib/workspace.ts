@@ -28,6 +28,9 @@ export async function requireWorkspace() {
     throw new Error(`Could not load subscription status: ${subscriptionError.message}`);
   }
 
+  const { data: isPlatformAdmin, error: adminError } = await supabase.rpc("is_platform_admin");
+  if (adminError) throw new Error(`Could not check platform owner access: ${adminError.message}`);
+
   return {
     supabase,
     user,
@@ -36,6 +39,6 @@ export async function requireWorkspace() {
     isPaid:
       !business.is_suspended &&
       (subscription?.status === "active" || subscription?.status === "trialing"),
-    isPlatformAdmin: user.app_metadata.platform_admin === true,
+    isPlatformAdmin,
   };
 }
