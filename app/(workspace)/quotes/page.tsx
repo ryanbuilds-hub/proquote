@@ -70,10 +70,16 @@ export default async function QuotesPage() {
               <tbody>
                 {quotes?.map((quote) => (
                   <tr key={quote.id}>
-                    <td><strong>{quote.quote_number}</strong><span className="table-secondary">{quote.description}</span></td>
+                    <td>
+                      <Link className="quote-table-link" href={`/quotes/${quote.id}`}>
+                        <strong>{quote.quote_number}</strong>
+                        <span className="table-secondary">{quote.description}</span>
+                        <span className="table-open-hint">Open quote →</span>
+                      </Link>
+                    </td>
                     <td>{quote.client_id ? clientNames.get(quote.client_id) ?? "Archived client" : "—"}</td>
                     <td>{new Date(quote.created_at).toLocaleDateString("en-IE")}</td>
-                    <td><span className="badge">{quote.status}</span></td>
+                    <td><span className={`badge quote-status-${quote.status}`}>{quote.status}</span></td>
                     <td className="align-right"><strong>{formatEuro(Number(quote.total))}</strong></td>
                   </tr>
                 ))}

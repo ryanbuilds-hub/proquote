@@ -171,6 +171,34 @@ export async function createQuote(formData: FormData): Promise<ActionResult> {
   return { ok: true, message: "Quote saved to your account." };
 }
 
+export async function updateQuoteStatus(
+  quoteId: string,
+  status: string,
+): Promise<ActionResult> {
+  const { supabase, business } = await requirePaidWorkspace();
+  if (!/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(quoteId)) {
+    return { ok: false, error: "Invalid quote." };
+  }
+  if (!["draft", "sent", "accepted", "declined"].includes(status)) {
+    return { ok: false, error: "Choose a valid quote status." };
+  }
+
+  const { data, error } = await supabase
+    .from("quotes")
+    .update({ status: status as "draft" | "sent" | "accepted" | "declined" })
+    .eq("id", quoteId)
+    .eq("business_id", business.id)
+    .select("id")
+    .maybeSingle();
+  if (error) return { ok: false, error: `Could not update quote: ${error.message}` };
+  if (!data) return { ok: false, error: "Quote not found in your account." };
+
+  revalidatePath(`/quotes/${quoteId}`);
+  revalidatePath("/quotes");
+  revalidatePath("/dashboard");
+  return { ok: true, message: "Quote status updated." };
+}
+
 export async function updateBusinessProfile(formData: FormData): Promise<ActionResult> {
   const { supabase, business } = await requireWorkspace();
   const name = textField(formData, "name", 120);
