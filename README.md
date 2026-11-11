@@ -4,6 +4,8 @@ ProQuote is a subscription-ready MVP for tradespeople. Each authenticated accoun
 
 The app uses Next.js, Supabase Auth/Postgres with row-level security (RLS), and Stripe Checkout/Customer Portal. Billing is **not live until you configure your own Supabase and Stripe projects**. This repository does not deploy the app or create those external accounts.
 
+Saved quotes can be printed or saved as PDF from the quote details page; the printable layout includes the business, client, and itemized quote details.
+
 ## Local setup
 
 Requirements: Node.js 20+ and npm.

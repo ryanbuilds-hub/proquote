@@ -16,10 +16,12 @@ const statusLabels: Record<QuoteStatus, string> = {
 
 export function QuoteDetailActions({
   quoteId,
+  quoteNumber,
   currentStatus,
   quoteText,
 }: {
   quoteId: string;
+  quoteNumber: string;
   currentStatus: QuoteStatus;
   quoteText: string;
 }) {
@@ -47,6 +49,19 @@ export function QuoteDetailActions({
     }
   }
 
+  function downloadPdf() {
+    const previousTitle = document.title;
+    document.title = `ProQuote ${quoteNumber}`;
+    window.addEventListener(
+      "afterprint",
+      () => {
+        document.title = previousTitle;
+      },
+      { once: true },
+    );
+    window.print();
+  }
+
   return (
     <div className="quote-detail-actions">
       <div className="detail-status-control">
@@ -68,6 +83,9 @@ export function QuoteDetailActions({
       </div>
 
       <div className="detail-share-actions">
+        <button className="button button-secondary" type="button" onClick={downloadPdf}>
+          Download / print PDF
+        </button>
         <button className="button button-secondary" type="button" onClick={copyQuote}>Copy quote</button>
         <a
           className="button button-primary"
