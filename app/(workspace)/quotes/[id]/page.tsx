@@ -96,6 +96,16 @@ export default async function QuoteDetailPage({
 
       <div className="quote-detail-layout">
         <div className="quote-detail-main">
+          <section className="print-only quote-print-business" aria-label="Business details">
+            <h2>{business.name}</h2>
+            <p>
+              {[business.phone, business.email, business.address]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+            {business.vat_number && <p>VAT no: {business.vat_number}</p>}
+          </section>
+
           {clientResult.data ? (
             <section className="panel detail-client-card">
               <div className="detail-section-heading">
@@ -152,9 +162,13 @@ export default async function QuoteDetailPage({
             <p className="muted">Update where this quote is at, or send the breakdown to your customer.</p>
             <QuoteDetailActions
               quoteId={quote.id}
+              quoteNumber={quote.quote_number}
               currentStatus={quote.status}
               quoteText={quoteText}
             />
+            <p className="note pdf-help">
+              Choose “Save as PDF” in the print options, then attach the saved file to WhatsApp or email.
+            </p>
           </section>
           <Link className="button button-outline button-full detail-back-button" href="/quotes">
             ← Back to all quotes
