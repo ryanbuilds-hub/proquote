@@ -16,7 +16,7 @@ Requirements: Node.js 20+ and npm.
 4. In Supabase Auth, configure the site URL and redirect URL to include `http://localhost:3000/auth/callback`. Choose whether to require email confirmation.
 5. Run `npm run dev`, create a test account, and confirm that a business account is created automatically.
 
-The migration creates the business, client, quote, and Stripe subscription tables; signup trigger; RLS policies; paid-access helper; and platform-owner controls.
+The migrations create the business, client, quote, and Stripe subscription tables; signup trigger; RLS policies; paid-access helper; platform-owner controls; and the public business-logo bucket. Business logos are limited to PNG, JPG, or WebP files up to 2 MB, and only the owning business can upload or remove its files. The logo is included in printable quote PDFs.
 
 ## Stripe setup
 

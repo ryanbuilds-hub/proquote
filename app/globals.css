@@ -157,6 +157,11 @@ tbody tr:last-child td { border-bottom: 0; }
 .quote-status-accepted { background: #e7f4ec; color: #39835d; }
 .quote-status-declined { background: #fbebea; color: #a8473e; }
 .quote-status-completed { background: #e6f4f1; color: #287565; }
+.business-logo-preview { display: flex; align-items: center; gap: 16px; }
+.business-logo-preview > img { max-width: 180px; max-height: 88px; object-fit: contain; object-position: left center; }
+.checkbox-label { display: inline-flex; align-items: center; gap: 8px; }
+.checkbox-label input { width: auto; }
+.field-hint { display: block; margin-top: 5px; color: var(--muted); font-size: 0.82rem; font-weight: 400; }
 .empty-state { display: grid; justify-items: start; gap: 8px; padding: 35px; }
 .empty-state h2, .empty-state p { margin-bottom: 0; }
 
@@ -376,6 +381,7 @@ tbody tr:last-child td { border-bottom: 0; }
   .quote-detail-layout, .quote-detail-main { display: block; }
   .quote-detail-main > * { margin-bottom: 14px; box-shadow: none; break-inside: avoid; }
   .quote-print-business { display: block; padding: 0 0 14px; border-bottom: 1px solid #e1e7ec; }
+  .quote-print-logo { display: block; max-width: 180px; max-height: 72px; margin-bottom: 10px; object-fit: contain; object-position: left center; }
   .quote-print-business h2 { margin-bottom: 4px; font-size: 16pt; }
   .quote-print-business p { margin: 0; color: #526175; font-size: 9pt; }
   .detail-client-card, .detail-breakdown { padding: 16px; }

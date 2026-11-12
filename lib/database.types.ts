@@ -27,6 +27,7 @@ export type Database = {
           phone: string;
           address: string;
           vat_number: string;
+          logo_path: string | null;
           is_suspended: boolean;
           created_at: string;
           updated_at: string;
@@ -39,6 +40,7 @@ export type Database = {
           phone?: string;
           address?: string;
           vat_number?: string;
+          logo_path?: string | null;
         }
       >;
       clients: Table<
