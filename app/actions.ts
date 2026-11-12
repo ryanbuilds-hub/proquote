@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { calculateQuote, type Material } from "@/lib/quotes";
 import type { Json } from "@/lib/database.types";
+import { isQuoteStatus } from "@/lib/quote-status";
 import { requireWorkspace } from "@/lib/workspace";
 
 export type ActionResult = { ok: true; message?: string } | { ok: false; error: string };
@@ -179,13 +180,13 @@ export async function updateQuoteStatus(
   if (!/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(quoteId)) {
     return { ok: false, error: "Invalid quote." };
   }
-  if (!["draft", "sent", "accepted", "declined"].includes(status)) {
+  if (!isQuoteStatus(status)) {
     return { ok: false, error: "Choose a valid quote status." };
   }
 
   const { data, error } = await supabase
     .from("quotes")
-    .update({ status: status as "draft" | "sent" | "accepted" | "declined" })
+    .update({ status })
     .eq("id", quoteId)
     .eq("business_id", business.id)
     .select("id")

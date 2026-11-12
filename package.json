@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "tsx --test lib/quotes.test.ts",
+    "test": "tsx --test lib/quotes.test.ts lib/business-logo.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

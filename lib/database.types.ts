@@ -1,3 +1,5 @@
+import type { QuoteStatus } from "@/lib/quote-status";
+
 export type Json =
   | string
   | number
@@ -25,6 +27,7 @@ export type Database = {
           phone: string;
           address: string;
           vat_number: string;
+          logo_path: string | null;
           is_suspended: boolean;
           created_at: string;
           updated_at: string;
@@ -37,6 +40,7 @@ export type Database = {
           phone?: string;
           address?: string;
           vat_number?: string;
+          logo_path?: string | null;
         }
       >;
       clients: Table<
@@ -79,7 +83,7 @@ export type Database = {
           subtotal: number;
           vat_amount: number;
           total: number;
-          status: "draft" | "sent" | "accepted" | "declined";
+          status: QuoteStatus;
           created_at: string;
           updated_at: string;
         },
@@ -98,7 +102,7 @@ export type Database = {
           subtotal: number;
           vat_amount: number;
           total: number;
-          status?: "draft" | "sent" | "accepted" | "declined";
+          status?: QuoteStatus;
         }
       >;
       subscriptions: Table<

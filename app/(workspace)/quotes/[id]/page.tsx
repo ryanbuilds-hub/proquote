@@ -52,6 +52,9 @@ export default async function QuoteDetailPage({
   }
 
   const materials = parseMaterials(quote.materials);
+  const businessLogoUrl = business.logo_path
+    ? supabase.storage.from("business-logos").getPublicUrl(business.logo_path).data.publicUrl
+    : null;
   const input = {
     description: quote.description,
     hours: Number(quote.hours),
@@ -97,6 +100,13 @@ export default async function QuoteDetailPage({
       <div className="quote-detail-layout">
         <div className="quote-detail-main">
           <section className="print-only quote-print-business" aria-label="Business details">
+            {businessLogoUrl && (
+              <img
+                className="quote-print-logo"
+                src={businessLogoUrl}
+                alt={`${business.name} logo`}
+              />
+            )}
             <h2>{business.name}</h2>
             <p>
               {[business.phone, business.email, business.address]
