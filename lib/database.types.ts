@@ -1,3 +1,5 @@
+import type { QuoteStatus } from "@/lib/quote-status";
+
 export type Json =
   | string
   | number
@@ -79,7 +81,7 @@ export type Database = {
           subtotal: number;
           vat_amount: number;
           total: number;
-          status: "draft" | "sent" | "accepted" | "declined";
+          status: QuoteStatus;
           created_at: string;
           updated_at: string;
         },
@@ -98,7 +100,7 @@ export type Database = {
           subtotal: number;
           vat_amount: number;
           total: number;
-          status?: "draft" | "sent" | "accepted" | "declined";
+          status?: QuoteStatus;
         }
       >;
       subscriptions: Table<

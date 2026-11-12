@@ -156,6 +156,7 @@ tbody tr:last-child td { border-bottom: 0; }
 .quote-status-sent { background: #eaf2fb; color: #426d9b; }
 .quote-status-accepted { background: #e7f4ec; color: #39835d; }
 .quote-status-declined { background: #fbebea; color: #a8473e; }
+.quote-status-completed { background: #e6f4f1; color: #287565; }
 .empty-state { display: grid; justify-items: start; gap: 8px; padding: 35px; }
 .empty-state h2, .empty-state p { margin-bottom: 0; }
 

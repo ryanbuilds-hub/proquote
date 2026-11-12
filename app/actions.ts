@@ -179,13 +179,13 @@ export async function updateQuoteStatus(
   if (!/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(quoteId)) {
     return { ok: false, error: "Invalid quote." };
   }
-  if (!["draft", "sent", "accepted", "declined"].includes(status)) {
+  if (!isQuoteStatus(status)) {
     return { ok: false, error: "Choose a valid quote status." };
   }
 
   const { data, error } = await supabase
     .from("quotes")
-    .update({ status: status as "draft" | "sent" | "accepted" | "declined" })
+    .update({ status })
     .eq("id", quoteId)
     .eq("business_id", business.id)
     .select("id")

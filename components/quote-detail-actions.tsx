@@ -4,14 +4,14 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { updateQuoteStatus } from "@/app/actions";
 import type { ActionResult } from "@/app/actions";
-
-type QuoteStatus = "draft" | "sent" | "accepted" | "declined";
+import { quoteStatuses, type QuoteStatus } from "@/lib/quote-status";
 
 const statusLabels: Record<QuoteStatus, string> = {
   draft: "Draft",
   sent: "Sent",
   accepted: "Accepted",
   declined: "Declined",
+  completed: "Completed",
 };
 
 export function QuoteDetailActions({
@@ -72,8 +72,8 @@ export function QuoteDetailActions({
             value={status}
             onChange={(event) => setStatus(event.target.value as QuoteStatus)}
           >
-            {Object.entries(statusLabels).map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
+            {quoteStatuses.map((value) => (
+              <option key={value} value={value}>{statusLabels[value]}</option>
             ))}
           </select>
           <button className="button button-secondary" type="button" onClick={saveStatus} disabled={pending || status === currentStatus}>
