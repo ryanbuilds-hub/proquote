@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { calculateQuote, type Material } from "@/lib/quotes";
 import type { Json } from "@/lib/database.types";
+import { isQuoteStatus } from "@/lib/quote-status";
 import { requireWorkspace } from "@/lib/workspace";
 
 export type ActionResult = { ok: true; message?: string } | { ok: false; error: string };
