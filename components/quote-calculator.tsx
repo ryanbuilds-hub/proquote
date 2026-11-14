@@ -1,8 +1,10 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createQuote, type ActionResult } from "@/app/actions";
+import { FREE_PLAN_LIMITS, hasReachedFreePlanLimit } from "@/lib/plan-limits";
 import {
   buildQuoteText,
   calculateQuote,
@@ -24,9 +26,13 @@ type MaterialRow = { name: string; cost: string };
 export function QuoteCalculator({
   business,
   clients,
+  isPaid,
+  quoteCount,
 }: {
   business: Business;
   clients: Client[];
+  isPaid: boolean;
+  quoteCount: number;
 }) {
   const router = useRouter();
   const [description, setDescription] = useState("");
@@ -63,6 +69,7 @@ export function QuoteCalculator({
     }
   }, [input]);
   const selectedClient = clients.find((client) => client.id === clientId);
+  const atQuoteLimit = hasReachedFreePlanLimit("quotes", quoteCount, isPaid);
   const quoteText = calculation
     ? buildQuoteText(business, input, calculation, selectedClient?.name)
     : "";
@@ -202,7 +209,24 @@ export function QuoteCalculator({
             </a>
           </div>
           {copyMessage && <p className="form-message muted" role="status">{copyMessage}</p>}
-          <button className="button button-primary button-full top-space" disabled={!calculation}>Save quote</button>
+          {atQuoteLimit && (
+            <div className="notice notice-warm top-space">
+              <div>
+                <strong>Free plan quote limit reached</strong>
+                <p className="muted">
+                  The free plan includes {FREE_PLAN_LIMITS.quotes} saved quotes. Upgrade for
+                  unlimited quotes; your existing quotes remain available.
+                </p>
+              </div>
+              <Link className="button button-primary" href="/billing">Explore upgrade</Link>
+            </div>
+          )}
+          <button
+            className="button button-primary button-full top-space"
+            disabled={!calculation || atQuoteLimit}
+          >
+            Save quote
+          </button>
           {result?.ok === false && <p className="form-message error-text" role="alert">{result.error}</p>}
           {result?.ok === true && <p className="form-message success-text" role="status">{result.message}</p>}
         </section>

@@ -9,12 +9,14 @@ type Subscription = Database["public"]["Tables"]["subscriptions"]["Row"] | null;
 export function BillingPanel({
   configured,
   isPaid,
+  isSuspended,
   subscription,
   required,
   checkoutState,
 }: {
   configured: boolean;
   isPaid: boolean;
+  isSuspended: boolean;
   subscription: Subscription;
   required: boolean;
   checkoutState?: "success" | "cancelled";
@@ -61,14 +63,16 @@ export function BillingPanel({
       )}
       {required && (
         <div className="notice notice-warm">
-          An active Stripe subscription is required before you can use clients and saved quotes.
+          {isSuspended
+            ? "This workspace is suspended. Contact the ProQuote team to restore access."
+            : "Your free plan includes up to 3 active clients and 5 saved quotes. Upgrade for unlimited use; your existing records remain accessible."}
         </div>
       )}
       <div className="billing-status">
         <span className="status-dot" data-active={isPaid} />
         <div>
           <span className="muted">Current status</span>
-          <strong>{subscription?.status ?? "No subscription"}</strong>
+          <strong>{isSuspended ? "Suspended" : isPaid ? subscription?.status : "Free plan"}</strong>
         </div>
       </div>
       {subscription?.current_period_end && (
@@ -77,10 +81,11 @@ export function BillingPanel({
           {subscription.cancel_at_period_end ? " · cancellation scheduled" : ""}
         </p>
       )}
-      <h2>{isPaid ? "Your workspace is active" : "Monthly plan"}</h2>
+      <h2>{isPaid ? "Your unlimited workspace is active" : "Upgrade to unlimited"}</h2>
       <p className="muted">
-        Your plan price is set in your Stripe account. Stripe securely handles payment
-        details and subscription management.
+        The free plan includes the quote calculator, up to 3 active clients and 5 saved quotes.
+        Upgrade for unlimited clients and quotes. Your plan price is set in Stripe, which securely
+        handles payment details and subscription management.
       </p>
 
       {!configured && (
@@ -104,8 +109,8 @@ export function BillingPanel({
         </div>
       )}
       <p className="note">
-        Client and quote data stays in your account. Access is enabled only after a verified
-        Stripe subscription update.
+        Your client and quote data stays in your account. Only verified Stripe subscription
+        updates unlock the unlimited plan.
       </p>
     </section>
   );

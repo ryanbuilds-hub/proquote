@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { QuoteDetailActions } from "@/components/quote-detail-actions";
 import { buildQuoteText, calculateQuote, formatEuro, type Material } from "@/lib/quotes";
 import type { Json } from "@/lib/database.types";
-import { requireWorkspace } from "@/lib/workspace";
+import { requireWorkspaceDataAccess } from "@/lib/workspace";
 
 function parseMaterials(value: Json): Material[] {
   if (!Array.isArray(value)) throw new Error("Saved quote contains invalid material details.");
@@ -27,8 +27,7 @@ export default async function QuoteDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { supabase, business, isPaid } = await requireWorkspace();
-  if (!isPaid) redirect("/billing?required=1");
+  const { supabase, business } = await requireWorkspaceDataAccess();
 
   const { data: quote, error } = await supabase
     .from("quotes")

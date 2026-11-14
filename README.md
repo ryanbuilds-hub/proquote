@@ -1,6 +1,6 @@
 # ProQuote
 
-ProQuote is a subscription-ready MVP for tradespeople. Each authenticated account owns a private business workspace with a guided dashboard, a client directory, business details, and saved quotes. Quote pricing preserves the supplied calculator's labour, call-out, materials markup, Irish VAT choices, euro formatting, copy, and WhatsApp sharing behavior.
+ProQuote is a subscription-ready MVP for tradespeople. Each authenticated account owns a private business workspace with a guided dashboard, a client directory, business details, and saved quotes. The permanent free plan includes the quote calculator, up to 3 active clients, and 5 saved quotes; a verified paid subscription unlocks unlimited clients and quotes. Quote pricing preserves the supplied calculator's labour, call-out, materials markup, Irish VAT choices, euro formatting, copy, and WhatsApp sharing behavior.
 
 The app uses Next.js, Supabase Auth/Postgres with row-level security (RLS), and Stripe Checkout/Customer Portal. Billing is **not live until you configure your own Supabase and Stripe projects**. This repository does not deploy the app or create those external accounts.
 
@@ -16,7 +16,7 @@ Requirements: Node.js 20+ and npm.
 4. In Supabase Auth, configure the site URL and redirect URL to include `http://localhost:3000/auth/callback`. Choose whether to require email confirmation.
 5. Run `npm run dev`, create a test account, and confirm that a business account is created automatically.
 
-The migrations create the business, client, quote, and Stripe subscription tables; signup trigger; RLS policies; paid-access helper; platform-owner controls; and the public business-logo bucket. Business logos are limited to PNG, JPG, or WebP files up to 2 MB, and only the owning business can upload or remove its files. The logo is included in printable quote PDFs.
+The migrations create the business, client, quote, and Stripe subscription tables; signup trigger; RLS policies; paid-access helper; platform-owner controls; and the public business-logo bucket. The free-plan migration keeps client and quote data available to the owning business regardless of subscription status, then atomically limits free-plan additions to 3 active clients and 5 saved quotes. Existing records remain readable and editable after reaching the caps. Business logos are limited to PNG, JPG, or WebP files up to 2 MB, and only the owning business can upload or remove its files. The logo is included in printable quote PDFs.
 
 ## Stripe setup
 
@@ -26,13 +26,13 @@ The migrations create the business, client, quote, and Stripe subscription table
 4. Set `SUPABASE_SERVICE_ROLE_KEY` for the server-side webhook handler only. Never expose it in a `NEXT_PUBLIC_` variable or browser code.
 5. Enable Stripe's Customer Portal so customers can manage or cancel their plan. For local webhook testing, forward Stripe CLI events to `http://localhost:3000/api/stripe/webhook`.
 
-Checkout uses Stripe-hosted payment collection. Only webhook-signature-verified subscription records in `active` or `trialing` status unlock clients and quotes. `past_due`, canceled, incomplete, and other statuses remain gated. Webhook state is stored by server-side code; normal user sessions cannot insert, update, or delete subscription rows. Configure and test the webhook before accepting payments.
+Checkout uses Stripe-hosted payment collection. Only webhook-signature-verified subscription records in `active` or `trialing` status unlock unlimited clients and quotes. Other subscription states use the free plan; existing client and quote records remain accessible, while further additions respect the free caps. Webhook state is stored by server-side code; normal user sessions cannot insert, update, or delete subscription rows. Configure and test the webhook before accepting payments.
 
 ## Account isolation and platform owner
 
 - Each Supabase Auth user has one business account in this MVP. A signup trigger creates that account from the business name entered at registration.
 - The authenticated user's business ID is derived server-side. RLS policies independently restrict business data by owner and active subscription; client-supplied IDs do not grant access to another account.
-- Clients and quotes are inaccessible through RLS until subscription status is active or trialing. Canceling or losing a subscription blocks access without deleting records.
+- RLS always restricts clients and quotes to the owning business. The free plan can use the calculator, read and edit saved records, add up to 3 active clients and save up to 5 quotes. An active or trialing Stripe subscription unlocks unlimited additions. Canceling or losing a subscription does not delete or hide records; free-plan caps apply to future additions.
 - Owner access is granted to one specific Supabase Auth user ID in the private `platform_owner` table. After creating your own account, run the following once in the Supabase SQL Editor, replacing the example with your account email:
 
   ```sql

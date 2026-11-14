@@ -23,7 +23,8 @@ This file is a quick handoff for Claude and other coding assistants working on P
 - Treat tenant isolation as a core product requirement: a business must never read or modify another business's clients or quotes.
 - Derive the signed-in user's business identity on the server. Do not trust a business ID supplied by the browser.
 - Supabase Row Level Security (RLS) is part of the authorization boundary. Keep it enabled and add or update policies when changing data access.
-- Client and quote access is subscription-gated. Only verified subscription states `active` and `trialing` unlock that data.
+- The permanent free plan includes up to 3 active clients and 5 saved quotes; verified Stripe subscription states `active` and `trialing` unlock unlimited additions.
+- Keep clients and quotes readable and editable by their owning business after a plan limit is reached or a subscription lapses. Enforce free-plan creation limits in PostgreSQL as well as in the UI.
 - Stripe subscription state is written by the verified server-side webhook; it is not user-editable.
 - Never commit `.env.local`, credentials, customer records, or production secrets. Use `.env.example` for safe variable names and placeholders.
 

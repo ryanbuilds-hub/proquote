@@ -2,11 +2,11 @@
 
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { calculateQuote, type Material } from "@/lib/quotes";
 import type { Json } from "@/lib/database.types";
 import { isQuoteStatus } from "@/lib/quote-status";
-import { requireWorkspace } from "@/lib/workspace";
+import { getQuotaExceededMessage } from "@/lib/plan-limits";
+import { requireWorkspace, requireWorkspaceDataAccess } from "@/lib/workspace";
 
 export type ActionResult = { ok: true; message?: string } | { ok: false; error: string };
 
@@ -22,14 +22,8 @@ function numberField(formData: FormData, key: string): number | null {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
 }
 
-async function requirePaidWorkspace() {
-  const workspace = await requireWorkspace();
-  if (!workspace.isPaid) redirect("/billing?required=1");
-  return workspace;
-}
-
 export async function createClientRecord(formData: FormData): Promise<ActionResult> {
-  const { supabase, business } = await requirePaidWorkspace();
+  const { supabase, business } = await requireWorkspaceDataAccess();
   const name = textField(formData, "name", 160);
   if (!name) return { ok: false, error: "Enter a client name." };
 
@@ -41,7 +35,13 @@ export async function createClientRecord(formData: FormData): Promise<ActionResu
     address: textField(formData, "address", 500),
     notes: textField(formData, "notes", 2000),
   });
-  if (error) return { ok: false, error: `Could not save client: ${error.message}` };
+  if (error) {
+    const quotaMessage = getQuotaExceededMessage(error.message);
+    return {
+      ok: false,
+      error: quotaMessage ?? `Could not save client: ${error.message}`,
+    };
+  }
 
   revalidatePath("/clients");
   revalidatePath("/dashboard");
@@ -49,7 +49,7 @@ export async function createClientRecord(formData: FormData): Promise<ActionResu
 }
 
 export async function archiveClient(clientId: string): Promise<ActionResult> {
-  const { supabase, business } = await requirePaidWorkspace();
+  const { supabase, business } = await requireWorkspaceDataAccess();
   if (!/^[0-9a-f-]{36}$/i.test(clientId)) {
     return { ok: false, error: "Invalid client." };
   }
@@ -70,7 +70,7 @@ export async function archiveClient(clientId: string): Promise<ActionResult> {
 }
 
 export async function createQuote(formData: FormData): Promise<ActionResult> {
-  const { supabase, business } = await requirePaidWorkspace();
+  const { supabase, business } = await requireWorkspaceDataAccess();
   const description = textField(formData, "description", 500) || "Job";
   const hours = numberField(formData, "hours");
   const hourlyRate = numberField(formData, "hourly_rate");
@@ -165,7 +165,13 @@ export async function createQuote(formData: FormData): Promise<ActionResult> {
     total: calculation.total,
   });
 
-  if (error) return { ok: false, error: `Could not save quote: ${error.message}` };
+  if (error) {
+    const quotaMessage = getQuotaExceededMessage(error.message);
+    return {
+      ok: false,
+      error: quotaMessage ?? `Could not save quote: ${error.message}`,
+    };
+  }
 
   revalidatePath("/quotes");
   revalidatePath("/dashboard");
@@ -176,7 +182,7 @@ export async function updateQuoteStatus(
   quoteId: string,
   status: string,
 ): Promise<ActionResult> {
-  const { supabase, business } = await requirePaidWorkspace();
+  const { supabase, business } = await requireWorkspaceDataAccess();
   if (!/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(quoteId)) {
     return { ok: false, error: "Invalid quote." };
   }

@@ -1,8 +1,10 @@
 "use client";
 
 import { FormEvent, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { archiveClient, createClientRecord } from "@/app/actions";
+import { hasReachedFreePlanLimit } from "@/lib/plan-limits";
 
 type Client = {
   id: string;
@@ -14,11 +16,20 @@ type Client = {
   created_at: string;
 };
 
-export function ClientManager({ clients }: { clients: Client[] }) {
+export function ClientManager({
+  clients,
+  isPaid,
+  clientLimit,
+}: {
+  clients: Client[];
+  isPaid: boolean;
+  clientLimit: number;
+}) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const atClientLimit = hasReachedFreePlanLimit("clients", clients.length, isPaid);
 
   async function addClient(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -52,20 +63,37 @@ export function ClientManager({ clients }: { clients: Client[] }) {
     <div className="split-layout">
       <section className="panel">
         <div className="section-heading">
-          <div><h2>Add a client</h2><p className="muted">Their details stay in your business account.</p></div>
-        </div>
-        <form className="form-stack" onSubmit={addClient}>
-          <label>Name<input name="name" required maxLength={160} autoComplete="name" /></label>
-          <div className="form-row">
-            <label>Email<input name="email" type="email" maxLength={254} autoComplete="email" /></label>
-            <label>Phone<input name="phone" type="tel" maxLength={60} autoComplete="tel" /></label>
+          <div>
+            <h2>Add a client</h2>
+            <p className="muted">
+              {isPaid
+                ? "Their details stay in your business account."
+                : `${clients.length}/${clientLimit} active clients on the free plan.`}
+            </p>
           </div>
-          <label>Address<input name="address" maxLength={500} autoComplete="street-address" /></label>
-          <label>Notes<textarea name="notes" maxLength={2000} rows={3} placeholder="Useful details about the customer or property" /></label>
-          {error && <p className="form-message error-text" role="alert">{error}</p>}
-          {message && <p className="form-message success-text" role="status">{message}</p>}
-          <button className="button button-primary" disabled={isPending}>Save client</button>
-        </form>
+        </div>
+        {atClientLimit ? (
+          <div className="notice notice-warm">
+            <div>
+              <strong>Free plan client limit reached</strong>
+              <p className="muted">Archive a client to make room, or upgrade for unlimited clients.</p>
+            </div>
+            <Link className="button button-primary" href="/billing">Explore upgrade</Link>
+          </div>
+        ) : (
+          <form className="form-stack" onSubmit={addClient}>
+            <label>Name<input name="name" required maxLength={160} autoComplete="name" /></label>
+            <div className="form-row">
+              <label>Email<input name="email" type="email" maxLength={254} autoComplete="email" /></label>
+              <label>Phone<input name="phone" type="tel" maxLength={60} autoComplete="tel" /></label>
+            </div>
+            <label>Address<input name="address" maxLength={500} autoComplete="street-address" /></label>
+            <label>Notes<textarea name="notes" maxLength={2000} rows={3} placeholder="Useful details about the customer or property" /></label>
+            {error && <p className="form-message error-text" role="alert">{error}</p>}
+            {message && <p className="form-message success-text" role="status">{message}</p>}
+            <button className="button button-primary" disabled={isPending}>Save client</button>
+          </form>
+        )}
       </section>
       <section className="panel">
         <div className="section-heading">

@@ -42,3 +42,9 @@ export async function requireWorkspace() {
     isPlatformAdmin,
   };
 }
+
+export async function requireWorkspaceDataAccess() {
+  const workspace = await requireWorkspace();
+  if (workspace.business.is_suspended) redirect("/billing?required=1");
+  return workspace;
+}
