@@ -116,6 +116,12 @@ begin
     return new;
   end if;
 
+  if tg_op = 'UPDATE' then
+    if new.archived_at is not distinct from old.archived_at then
+      return new;
+    end if;
+  end if;
+
   if new.archived_at is not null then
     return new;
   end if;
@@ -139,6 +145,7 @@ begin
   into active_client_count
   from public.clients c
   where c.business_id = new.business_id
+    and c.id <> new.id
     and c.archived_at is null;
 
   if active_client_count >= 3 then
@@ -197,7 +204,7 @@ end;
 $$;
 
 create trigger clients_enforce_free_plan_limit
-before insert on public.clients
+before insert or update of archived_at on public.clients
 for each row execute function public.enforce_free_plan_client_limit();
 
 create trigger quotes_enforce_free_plan_limit
@@ -208,7 +215,7 @@ revoke all on function public.enforce_free_plan_client_limit() from public, anon
 revoke all on function public.enforce_free_plan_quote_limit() from public, anon, authenticated;
 
 comment on function public.enforce_free_plan_client_limit() is
-  'Atomically enforces the permanent free plan limit of three active clients.';
+  'Atomically enforces the permanent free plan limit of three active clients on inserts and unarchiving.';
 comment on function public.enforce_free_plan_quote_limit() is
   'Atomically enforces the permanent free plan limit of five saved quotes.';
 

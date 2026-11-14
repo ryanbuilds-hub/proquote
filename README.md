@@ -16,7 +16,9 @@ Requirements: Node.js 20+ and npm.
 4. In Supabase Auth, configure the site URL and redirect URL to include `http://localhost:3000/auth/callback`. Choose whether to require email confirmation.
 5. Run `npm run dev`, create a test account, and confirm that a business account is created automatically.
 
-The migrations create the business, client, quote, and Stripe subscription tables; signup trigger; RLS policies; paid-access helper; platform-owner controls; and the public business-logo bucket. The free-plan migration keeps client and quote data available to the owning business regardless of subscription status, then atomically limits free-plan additions to 3 active clients and 5 saved quotes. Existing records remain readable and editable after reaching the caps. Business logos are limited to PNG, JPG, or WebP files up to 2 MB, and only the owning business can upload or remove its files. The logo is included in printable quote PDFs.
+The migrations create the business, client, quote, and Stripe subscription tables; signup trigger; RLS policies; paid-access helper; platform-owner controls; and the public business-logo bucket. The free-plan migration keeps client and quote data available to the owning business regardless of subscription status, then atomically limits free-plan additions to 3 active clients and 5 saved quotes. Archiving a client frees a slot; restoring an archived client is also checked against the active-client cap. Existing records remain readable and editable after reaching the caps. Business logos are limited to PNG, JPG, or WebP files up to 2 MB, and only the owning business can upload or remove its files. The logo is included in printable quote PDFs.
+
+To verify the free-plan limits after applying migrations, use a free test account: create 3 active clients, archive one, add a replacement, then confirm restoring the archived client is rejected while all records remain visible. Confirm the 6th quote is rejected after saving 5, and an existing quote can still be updated. With a verified `active` or `trialing` subscription, additional clients and quotes should remain allowed.
 
 ## Stripe setup
 
