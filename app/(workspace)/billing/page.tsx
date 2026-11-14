@@ -28,6 +28,7 @@ export default async function BillingPage({
       <BillingPanel
         configured={stripeConfigured}
         isPaid={isPaid}
+        isSuspended={business.is_suspended}
         subscription={subscription}
         required={required === "1"}
         checkoutState={checkout === "success" || checkout === "cancelled" ? checkout : undefined}

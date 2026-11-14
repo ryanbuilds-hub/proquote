@@ -1,24 +1,10 @@
 import Link from "next/link";
-import { requireWorkspace } from "@/lib/workspace";
+import { requireWorkspaceDataAccess } from "@/lib/workspace";
 import { formatEuro } from "@/lib/quotes";
+import { FREE_PLAN_LIMITS } from "@/lib/plan-limits";
 
 export default async function QuotesPage() {
-  const { supabase, business, isPaid } = await requireWorkspace();
-
-  if (!isPaid) {
-    return (
-      <div className="page-content">
-        <header className="page-heading">
-          <div><p className="eyebrow">Quote history</p><h1>Your quotes</h1></div>
-        </header>
-        <section className="panel empty-state">
-          <h2>Saved quotes are part of your paid workspace</h2>
-          <p className="muted">Activate a subscription to create and keep quote records.</p>
-          <Link className="button button-primary" href="/billing">Activate monthly access</Link>
-        </section>
-      </div>
-    );
-  }
+  const { supabase, business, isPaid } = await requireWorkspaceDataAccess();
 
   const { data: quotes, error } = await supabase
     .from("quotes")
@@ -52,7 +38,11 @@ export default async function QuotesPage() {
         <div>
           <p className="eyebrow">Quote history</p>
           <h1>Your quotes</h1>
-          <p className="muted">Your latest saved estimates for work and materials.</p>
+          <p className="muted">
+            {isPaid
+              ? "Your latest saved estimates for work and materials."
+              : `Free plan: up to ${FREE_PLAN_LIMITS.quotes} saved quotes. Upgrade for unlimited quotes.`}
+          </p>
         </div>
         <Link className="button button-primary" href="/quotes/new">New quote</Link>
       </header>

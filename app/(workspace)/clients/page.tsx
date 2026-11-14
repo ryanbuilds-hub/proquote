@@ -1,24 +1,9 @@
 import { ClientManager } from "@/components/client-manager";
-import { requireWorkspace } from "@/lib/workspace";
-import Link from "next/link";
+import { FREE_PLAN_LIMITS } from "@/lib/plan-limits";
+import { requireWorkspaceDataAccess } from "@/lib/workspace";
 
 export default async function ClientsPage() {
-  const { supabase, business, isPaid } = await requireWorkspace();
-
-  if (!isPaid) {
-    return (
-      <div className="page-content">
-        <header className="page-heading">
-          <div><p className="eyebrow">Directory</p><h1>Your clients</h1></div>
-        </header>
-        <section className="panel empty-state">
-          <h2>Client directory is part of your paid workspace</h2>
-          <p className="muted">Your client information stays private to your business.</p>
-          <Link className="button button-primary" href="/billing">Activate monthly access</Link>
-        </section>
-      </div>
-    );
-  }
+  const { supabase, business, isPaid } = await requireWorkspaceDataAccess();
 
   const { data: clients, error } = await supabase
     .from("clients")
@@ -34,10 +19,18 @@ export default async function ClientsPage() {
         <div>
           <p className="eyebrow">Directory</p>
           <h1>Your clients</h1>
-          <p className="muted">Keep your customer details ready for the next job.</p>
+          <p className="muted">
+            {isPaid
+              ? "Keep your customer details ready for the next job."
+              : `Free plan: up to ${FREE_PLAN_LIMITS.clients} active clients. Upgrade for unlimited clients.`}
+          </p>
         </div>
       </header>
-      <ClientManager clients={clients ?? []} />
+      <ClientManager
+        clients={clients ?? []}
+        isPaid={isPaid}
+        clientLimit={FREE_PLAN_LIMITS.clients}
+      />
     </div>
   );
 }

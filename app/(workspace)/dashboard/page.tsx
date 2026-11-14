@@ -1,28 +1,24 @@
 import Link from "next/link";
+import { FREE_PLAN_LIMITS } from "@/lib/plan-limits";
 import { requireWorkspace } from "@/lib/workspace";
 
 export default async function DashboardPage() {
   const { supabase, business, subscription, isPaid } = await requireWorkspace();
-  let clientCount = 0;
-  let quoteCount = 0;
-
-  if (isPaid) {
-    const [clients, quotes] = await Promise.all([
-      supabase
-        .from("clients")
-        .select("id", { count: "exact", head: true })
-        .eq("business_id", business.id)
-        .is("archived_at", null),
-      supabase
-        .from("quotes")
-        .select("id", { count: "exact", head: true })
-        .eq("business_id", business.id),
-    ]);
-    if (clients.error) throw new Error(`Could not load client count: ${clients.error.message}`);
-    if (quotes.error) throw new Error(`Could not load quote count: ${quotes.error.message}`);
-    clientCount = clients.count ?? 0;
-    quoteCount = quotes.count ?? 0;
-  }
+  const [clients, quotes] = await Promise.all([
+    supabase
+      .from("clients")
+      .select("id", { count: "exact", head: true })
+      .eq("business_id", business.id)
+      .is("archived_at", null),
+    supabase
+      .from("quotes")
+      .select("id", { count: "exact", head: true })
+      .eq("business_id", business.id),
+  ]);
+  if (clients.error) throw new Error(`Could not load client count: ${clients.error.message}`);
+  if (quotes.error) throw new Error(`Could not load quote count: ${quotes.error.message}`);
+  const clientCount = clients.count ?? 0;
+  const quoteCount = quotes.count ?? 0;
   const profileComplete =
     business.name !== "My Trade Business" && Boolean(business.email);
   const steps = [
@@ -38,16 +34,16 @@ export default async function DashboardPage() {
       number: "02",
       label: "Save your first client",
       detail: "Keep customer contacts together in one private directory.",
-      href: isPaid ? "/clients" : "/billing",
-      action: isPaid ? (clientCount ? "Open clients" : "Add a client") : "Activate access",
+      href: "/clients",
+      action: clientCount ? "Open clients" : "Add a client",
       complete: clientCount > 0,
     },
     {
       number: "03",
       label: "Create your first quote",
       detail: "Price labour, materials and VAT, then share the estimate.",
-      href: isPaid ? "/quotes/new" : "/billing",
-      action: isPaid ? (quoteCount ? "New quote" : "Build a quote") : "Activate access",
+      href: "/quotes/new",
+      action: quoteCount ? "New quote" : "Build a quote",
       complete: quoteCount > 0,
     },
   ];
@@ -60,10 +56,10 @@ export default async function DashboardPage() {
           <h1>Good work starts<br />with a clear quote.</h1>
           <p>Welcome back, {business.name}. Your clients, job details and quotes are all in one place.</p>
           <div className="hero-actions">
-            <Link className="button button-primary" href={isPaid ? "/quotes/new" : "/billing"}>
+            <Link className="button button-primary" href="/quotes/new">
               Create a quote <span aria-hidden="true">→</span>
             </Link>
-            <Link className="hero-text-link" href={isPaid ? "/clients" : "/billing"}>
+            <Link className="hero-text-link" href="/clients">
               Browse clients <span aria-hidden="true">↗</span>
             </Link>
           </div>
@@ -85,34 +81,44 @@ export default async function DashboardPage() {
         </div>
       </header>
 
-      {!isPaid && (
+      {business.is_suspended ? (
+        <section className="notice notice-error">
+          <div>
+            <h2>This workspace is suspended</h2>
+            <p>Contact the ProQuote team to restore access to your clients and quotes.</p>
+          </div>
+        </section>
+      ) : !isPaid ? (
         <section className="notice notice-warm">
           <div>
-            <h2>Activate your ProQuote workspace</h2>
+            <h2>You’re on the free plan</h2>
             <p>
-              Your client list and saved quotes unlock when Stripe confirms an active
-              subscription. Your business profile is ready to finish in the meantime.
+              Try ProQuote with up to {FREE_PLAN_LIMITS.clients} active clients and{" "}
+              {FREE_PLAN_LIMITS.quotes} saved quotes. Your records stay accessible if you
+              reach a limit; upgrade any time for unlimited clients and quotes.
             </p>
             <p className="muted">
-              Subscription status: <strong>{subscription?.status ?? "not subscribed"}</strong>
+              {subscription?.status && subscription.status !== "inactive" && (
+                <>Previous subscription status: <strong>{subscription.status}</strong></>
+              )}
             </p>
           </div>
-          <Link className="button button-primary" href="/billing">Choose monthly plan</Link>
+          <Link className="button button-primary" href="/billing">Explore unlimited plan</Link>
         </section>
-      )}
+      ) : null}
 
       <section className="stat-grid">
         <article className="stat-card">
           <span className="stat-icon client-icon" aria-hidden="true">C</span>
           <span className="muted">Active clients</span>
-          <strong>{isPaid ? clientCount : "—"}</strong>
-          <Link href={isPaid ? "/clients" : "/billing"}>Open client directory</Link>
+          <strong>{isPaid ? clientCount : `${clientCount}/${FREE_PLAN_LIMITS.clients}`}</strong>
+          <Link href="/clients">Open client directory</Link>
         </article>
         <article className="stat-card">
           <span className="stat-icon quote-icon" aria-hidden="true">Q</span>
           <span className="muted">Saved quotes</span>
-          <strong>{isPaid ? quoteCount : "—"}</strong>
-          <Link href={isPaid ? "/quotes" : "/billing"}>View quote history</Link>
+          <strong>{isPaid ? quoteCount : `${quoteCount}/${FREE_PLAN_LIMITS.quotes}`}</strong>
+          <Link href="/quotes">View quote history</Link>
         </article>
         <article className="stat-card">
           <span className="stat-icon billing-icon" aria-hidden="true">£</span>
