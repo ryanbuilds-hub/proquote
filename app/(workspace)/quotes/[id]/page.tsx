@@ -1,25 +1,9 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { QuoteDetailActions } from "@/components/quote-detail-actions";
-import { buildQuoteText, calculateQuote, formatEuro, type Material } from "@/lib/quotes";
-import type { Json } from "@/lib/database.types";
+import { InvoiceConversion } from "@/components/invoice-conversion";
+import { buildQuoteText, calculateQuote, formatEuro, parseMaterials } from "@/lib/quotes";
 import { requireWorkspace } from "@/lib/workspace";
-
-function parseMaterials(value: Json): Material[] {
-  if (!Array.isArray(value)) throw new Error("Saved quote contains invalid material details.");
-  return value.map((item) => {
-    if (
-      typeof item !== "object" ||
-      item === null ||
-      Array.isArray(item) ||
-      typeof item.name !== "string" ||
-      typeof item.cost !== "number"
-    ) {
-      throw new Error("Saved quote contains invalid material details.");
-    }
-    return { name: item.name, cost: item.cost };
-  });
-}
 
 export default async function QuoteDetailPage({
   params,
@@ -38,6 +22,14 @@ export default async function QuoteDetailPage({
     .maybeSingle();
   if (error) throw new Error(`Could not load quote: ${error.message}`);
   if (!quote) notFound();
+
+  const { data: existingInvoice, error: invoiceError } = await supabase
+    .from("invoices")
+    .select("id,invoice_number")
+    .eq("business_id", business.id)
+    .eq("quote_id", quote.id)
+    .maybeSingle();
+  if (invoiceError) throw new Error(`Could not check for an invoice: ${invoiceError.message}`);
 
   const clientResult = quote.client_id
     ? await supabase
@@ -170,10 +162,24 @@ export default async function QuoteDetailPage({
             <p className="eyebrow">Quote actions</p>
             <h2>Keep things moving</h2>
             <p className="muted">Update where this quote is at, or send the breakdown to your customer.</p>
+            {!existingInvoice && (
+              <Link className="button button-secondary button-full edit-quote-link" href={`/quotes/${quote.id}/edit`}>
+                Edit quote
+              </Link>
+            )}
+            <InvoiceConversion
+              quoteId={quote.id}
+              quoteTotal={Number(quote.total)}
+              quoteAccepted={quote.status === "accepted"}
+              dueDateDefault={new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)}
+              existingInvoice={existingInvoice}
+            />
             <QuoteDetailActions
               quoteId={quote.id}
               quoteNumber={quote.quote_number}
               currentStatus={quote.status}
+              currentFollowUpDate={quote.follow_up_date}
+              canChangeStatus={!existingInvoice}
               quoteText={quoteText}
             />
             <p className="note pdf-help">

@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildQuoteText, calculateQuote, formatEuro } from "./quotes";
+import { buildQuoteText, calculateQuote, formatEuro, parseMaterials } from "./quotes";
+
+test("parses saved material rows for editing", () => {
+  assert.deepEqual(
+    parseMaterials([{ name: "Tap", cost: 80 }, { name: "Fittings", cost: 10 }]),
+    [{ name: "Tap", cost: 80 }, { name: "Fittings", cost: 10 }],
+  );
+  assert.throws(() => parseMaterials([{ name: "Tap", cost: "80" }]), /invalid material details/);
+});
 
 test("calculates labour, call-out, marked-up materials, and VAT", () => {
   const result = calculateQuote({

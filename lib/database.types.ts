@@ -84,6 +84,7 @@ export type Database = {
           vat_amount: number;
           total: number;
           status: QuoteStatus;
+          follow_up_date: string | null;
           created_at: string;
           updated_at: string;
         },
@@ -103,6 +104,64 @@ export type Database = {
           vat_amount: number;
           total: number;
           status?: QuoteStatus;
+          follow_up_date?: string | null;
+        }
+      >;
+      invoices: Table<
+        {
+          id: string;
+          business_id: string;
+          quote_id: string;
+          invoice_number: string;
+          status: "draft" | "sent";
+          issued_on: string;
+          due_date: string;
+          deposit_required: number;
+          subtotal: number;
+          vat_amount: number;
+          total: number;
+          business_snapshot: Json;
+          client_snapshot: Json | null;
+          quote_snapshot: Json;
+          created_at: string;
+          updated_at: string;
+        },
+        {
+          id?: string;
+          business_id: string;
+          quote_id: string;
+          invoice_number: string;
+          status?: "draft" | "sent";
+          issued_on?: string;
+          due_date: string;
+          deposit_required?: number;
+          subtotal: number;
+          vat_amount: number;
+          total: number;
+          business_snapshot: Json;
+          client_snapshot?: Json | null;
+          quote_snapshot: Json;
+        }
+      >;
+      invoice_payments: Table<
+        {
+          id: string;
+          business_id: string;
+          invoice_id: string;
+          amount: number;
+          paid_on: string;
+          method: "cash" | "bank_transfer" | "card" | "other";
+          note: string;
+          created_at: string;
+        },
+        {
+          id?: string;
+          business_id: string;
+          invoice_id: string;
+          amount: number;
+          paid_on?: string;
+          method: "cash" | "bank_transfer" | "card" | "other";
+          note?: string;
         }
       >;
       subscriptions: Table<
@@ -137,6 +196,18 @@ export type Database = {
       is_platform_admin: { Args: Record<string, never>; Returns: boolean };
       set_business_suspension: {
         Args: { p_business_id: string; p_suspended: boolean };
+        Returns: undefined;
+      };
+      create_invoice_from_accepted_quote: {
+        Args: {
+          p_quote_id: string;
+          p_due_date: string;
+          p_deposit_required: number;
+        };
+        Returns: string;
+      };
+      set_invoice_status: {
+        Args: { p_invoice_id: string; p_status: "sent" };
         Returns: undefined;
       };
     };

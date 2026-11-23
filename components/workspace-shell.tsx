@@ -6,11 +6,12 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 const links = [
-  { href: "/dashboard", label: "Home", symbol: "H" },
-  { href: "/clients", label: "Clients", symbol: "C" },
-  { href: "/quotes", label: "Quotes", symbol: "Q" },
-  { href: "/settings", label: "Business profile", symbol: "B" },
-  { href: "/billing", label: "Billing", symbol: "€" },
+  { href: "/dashboard", label: "Home", mobileLabel: "Home", symbol: "H" },
+  { href: "/clients", label: "Clients", mobileLabel: "Clients", symbol: "C" },
+  { href: "/quotes", label: "Quotes", mobileLabel: "Quotes", symbol: "Q" },
+  { href: "/invoices", label: "Invoices", mobileLabel: "Invoices", symbol: "I" },
+  { href: "/settings", label: "Business profile", mobileLabel: "Profile", symbol: "B" },
+  { href: "/billing", label: "Billing", mobileLabel: "Billing", symbol: "€" },
 ];
 
 export function WorkspaceShell({
@@ -54,9 +55,11 @@ export function WorkspaceShell({
               className={`nav-link${pathname === link.href || pathname.startsWith(`${link.href}/`) ? " active" : ""}`}
               href={link.href}
               key={link.href}
+              aria-current={pathname === link.href || pathname.startsWith(`${link.href}/`) ? "page" : undefined}
             >
               <span className="nav-symbol" aria-hidden="true">{link.symbol}</span>
-              <span>{link.label}</span>
+              <span className="nav-label">{link.label}</span>
+              <span className="mobile-nav-label" aria-hidden="true">{link.mobileLabel}</span>
             </Link>
           ))}
           {isPlatformAdmin && (
@@ -65,9 +68,11 @@ export function WorkspaceShell({
               <Link
                 className={`nav-link${pathname.startsWith("/admin") ? " active owner-link" : " owner-link"}`}
                 href="/admin"
+                aria-current={pathname.startsWith("/admin") ? "page" : undefined}
               >
                 <span className="nav-symbol owner-symbol" aria-hidden="true">✦</span>
-                <span>Owner dashboard</span>
+                <span className="nav-label">Owner dashboard</span>
+                <span className="mobile-nav-label" aria-hidden="true">Owner</span>
               </Link>
             </div>
           )}

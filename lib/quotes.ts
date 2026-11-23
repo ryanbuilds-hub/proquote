@@ -3,6 +3,25 @@ export type Material = {
   cost: number;
 };
 
+export function parseMaterials(value: unknown): Material[] {
+  if (!Array.isArray(value)) {
+    throw new Error("Saved quote contains invalid material details.");
+  }
+
+  return value.map((item) => {
+    if (
+      typeof item !== "object" ||
+      item === null ||
+      Array.isArray(item) ||
+      typeof item.name !== "string" ||
+      typeof item.cost !== "number"
+    ) {
+      throw new Error("Saved quote contains invalid material details.");
+    }
+    return { name: item.name, cost: item.cost };
+  });
+}
+
 export type QuoteInput = {
   description: string;
   hours: number;

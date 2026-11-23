@@ -6,13 +6,17 @@ The app uses Next.js, Supabase Auth/Postgres with row-level security (RLS), and 
 
 Saved quotes can be printed or saved as PDF from the quote details page; the printable layout includes the business, client, and itemized quote details.
 
+For sent quotes, set an optional follow-up date from the quote details page. Due and overdue reminders appear on the workspace dashboard; no email or SMS is sent.
+
+Accepted quotes can be converted once into invoice drafts. Conversion snapshots the accepted quote and business/client details, lets the business set a due date and required deposit, and supports marking the invoice as sent and recording manual partial/deposit payments. Invoice balances and overdue status are derived from the payment history. ProQuote does not collect customer invoice payments online in this version.
+
 ## Local setup
 
 Requirements: Node.js 20+ and npm.
 
 1. Install dependencies with `npm install`.
 2. Copy `.env.example` to `.env.local` and fill in your Supabase project URL and anon key.
-3. Apply the SQL files in `supabase/migrations/` to your Supabase project in filename order. This includes the initial schema and later updates such as the Completed quote status. You can use the Supabase SQL Editor or initialize/link the Supabase CLI (`supabase init`, `supabase link`, then `supabase db push`).
+3. Apply the SQL files in `supabase/migrations/` to your Supabase project in filename order. This includes the initial schema and later updates such as the Completed quote status, business quote logos, quote follow-up reminders, and quote-to-invoice workflow. You can use the Supabase SQL Editor or initialize/link the Supabase CLI (`supabase init`, `supabase link`, then `supabase db push`).
 4. In Supabase Auth, configure the site URL and redirect URL to include `http://localhost:3000/auth/callback`. Choose whether to require email confirmation.
 5. Run `npm run dev`, create a test account, and confirm that a business account is created automatically.
 
@@ -62,6 +66,24 @@ See `.env.example` for names and harmless placeholders:
 
 Use test-mode Stripe keys until you've verified checkout, webhook delivery, subscription cancellation, and access gating end to end. Provide production environment values through your hosting provider's secret manager, not source control.
 
+## Publish and add to a phone
+
+The app can be installed from its public HTTPS address after deployment. For a Vercel deployment:
+
+1. Import the `ryanbuilds-hub/proquote` repository into your Vercel account and deploy the branch containing the app changes.
+2. Add the environment variables from `.env.example` in Vercel's project settings. Use your production Supabase values and a newly issued Stripe key; never reuse a revoked key. Keep service-role, Stripe secret, and webhook values server-only.
+3. Set `NEXT_PUBLIC_APP_URL` to the Vercel HTTPS domain. In Supabase Auth, set the Site URL to that domain and add `https://<your-domain>/auth/callback` to the redirect URLs.
+4. In Stripe, register `https://<your-domain>/api/stripe/webhook` for the subscription events listed above and save its signing secret in Vercel. Redeploy after changing production environment variables.
+
+The app does not have a public URL until you complete the hosting setup. Keep Stripe in test mode until checkout, webhook delivery, and subscription access have been verified on the deployed URL.
+
+Once deployed, sign in from your phone's browser and add it to the home screen:
+
+- **iPhone/iPad:** open the app in Safari, tap **Share**, then **Add to Home Screen**.
+- **Android:** open the app in Chrome, tap the menu, then **Install app** or **Add to Home screen**.
+
+The web app manifest and phone icons are included. Signing in still uses your normal ProQuote account; installing the icon does not make app data public.
+
 ## Verification
 
 ```sh
@@ -70,5 +92,3 @@ npm run typecheck
 npm run lint
 npm run build
 ```
-
-Create a private deployment and external Supabase/Stripe accounts separately when you are ready; no deployment is configured by this repository.

@@ -2,7 +2,7 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createQuote, type ActionResult } from "@/app/actions";
+import { createQuote, updateQuote, type ActionResult } from "@/app/actions";
 import {
   buildQuoteText,
   calculateQuote,
@@ -20,23 +20,31 @@ type Business = {
 };
 type Client = { id: string; name: string };
 type MaterialRow = { name: string; cost: string };
+type InitialQuote = QuoteInput & { clientId: string };
 
 export function QuoteCalculator({
   business,
   clients,
+  quoteId,
+  initialQuote,
 }: {
   business: Business;
   clients: Client[];
+  quoteId?: string;
+  initialQuote?: InitialQuote;
 }) {
   const router = useRouter();
-  const [description, setDescription] = useState("");
-  const [clientId, setClientId] = useState("");
-  const [hours, setHours] = useState("4");
-  const [hourlyRate, setHourlyRate] = useState("55");
-  const [callOutFee, setCallOutFee] = useState("0");
-  const [vatRate, setVatRate] = useState("13.5");
-  const [materialsMarkup, setMaterialsMarkup] = useState("15");
-  const [materials, setMaterials] = useState<MaterialRow[]>([{ name: "", cost: "" }]);
+  const [description, setDescription] = useState(initialQuote?.description ?? "");
+  const [clientId, setClientId] = useState(initialQuote?.clientId ?? "");
+  const [hours, setHours] = useState(String(initialQuote?.hours ?? 4));
+  const [hourlyRate, setHourlyRate] = useState(String(initialQuote?.hourlyRate ?? 55));
+  const [callOutFee, setCallOutFee] = useState(String(initialQuote?.callOutFee ?? 0));
+  const [vatRate, setVatRate] = useState(String(initialQuote?.vatRate ?? 13.5));
+  const [materialsMarkup, setMaterialsMarkup] = useState(String(initialQuote?.materialsMarkup ?? 15));
+  const [materials, setMaterials] = useState<MaterialRow[]>(
+    initialQuote?.materials.map((item) => ({ name: item.name, cost: String(item.cost) })) ??
+      [{ name: "", cost: "" }],
+  );
   const [result, setResult] = useState<ActionResult | null>(null);
   const [copyMessage, setCopyMessage] = useState("");
 
@@ -103,9 +111,14 @@ export function QuoteCalculator({
     setResult(null);
     const formData = new FormData(event.currentTarget);
     formData.set("materials", JSON.stringify(input.materials));
-    const response = await createQuote(formData);
+    const response = quoteId
+      ? await updateQuote(quoteId, formData)
+      : await createQuote(formData);
     setResult(response);
-    if (response.ok) router.refresh();
+    if (response.ok) {
+      if (quoteId) router.push(`/quotes/${quoteId}`);
+      router.refresh();
+    }
   }
 
   return (
@@ -202,7 +215,9 @@ export function QuoteCalculator({
             </a>
           </div>
           {copyMessage && <p className="form-message muted" role="status">{copyMessage}</p>}
-          <button className="button button-primary button-full top-space" disabled={!calculation}>Save quote</button>
+          <button className="button button-primary button-full top-space" disabled={!calculation}>
+            {quoteId ? "Save quote changes" : "Save quote"}
+          </button>
           {result?.ok === false && <p className="form-message error-text" role="alert">{result.error}</p>}
           {result?.ok === true && <p className="form-message success-text" role="status">{result.message}</p>}
         </section>

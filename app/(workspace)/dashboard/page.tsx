@@ -1,13 +1,28 @@
 import Link from "next/link";
 import { requireWorkspace } from "@/lib/workspace";
+import { formatEuro } from "@/lib/quotes";
+import {
+  formatFollowUpDate,
+  getFollowUpCutoff,
+  getFollowUpState,
+} from "@/lib/quote-follow-up";
 
 export default async function DashboardPage() {
   const { supabase, business, subscription, isPaid } = await requireWorkspace();
   let clientCount = 0;
   let quoteCount = 0;
+  const today = new Date().toISOString().slice(0, 10);
+  let followUpQuotes: {
+    id: string;
+    quote_number: string;
+    description: string;
+    total: number;
+    follow_up_date: string;
+  }[] = [];
 
   if (isPaid) {
-    const [clients, quotes] = await Promise.all([
+    const followUpCutoff = getFollowUpCutoff(today);
+    const [clients, quotes, followUps] = await Promise.all([
       supabase
         .from("clients")
         .select("id", { count: "exact", head: true })
@@ -17,11 +32,24 @@ export default async function DashboardPage() {
         .from("quotes")
         .select("id", { count: "exact", head: true })
         .eq("business_id", business.id),
+      supabase
+        .from("quotes")
+        .select("id,quote_number,description,total,follow_up_date")
+        .eq("business_id", business.id)
+        .eq("status", "sent")
+        .lte("follow_up_date", followUpCutoff)
+        .order("follow_up_date", { ascending: true })
+        .limit(8),
     ]);
     if (clients.error) throw new Error(`Could not load client count: ${clients.error.message}`);
     if (quotes.error) throw new Error(`Could not load quote count: ${quotes.error.message}`);
+    if (followUps.error) throw new Error(`Could not load quote reminders: ${followUps.error.message}`);
     clientCount = clients.count ?? 0;
     quoteCount = quotes.count ?? 0;
+    followUpQuotes = (followUps.data ?? []).filter(
+      (quote): quote is typeof quote & { follow_up_date: string } =>
+        quote.follow_up_date !== null,
+    );
   }
   const profileComplete =
     business.name !== "My Trade Business" && Boolean(business.email);
@@ -121,6 +149,51 @@ export default async function DashboardPage() {
           <Link href="/billing">Manage subscription</Link>
         </article>
       </section>
+
+      {isPaid && (
+        <section className="panel follow-up-panel" aria-labelledby="follow-up-heading">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Stay on top of quotes</p>
+              <h2 id="follow-up-heading">Follow-up reminders</h2>
+              <p className="muted">Sent quotes due today, overdue, or due in the next seven days.</p>
+            </div>
+          </div>
+          {followUpQuotes.length === 0 ? (
+            <p className="empty-inline">No quote follow-ups due in the next seven days.</p>
+          ) : (
+            <div className="follow-up-list">
+              {followUpQuotes.map((quote) => {
+                const state = getFollowUpState(quote.follow_up_date, today);
+                const stateLabel =
+                  state === "overdue"
+                    ? "Overdue"
+                    : state === "today"
+                      ? "Due today"
+                      : `Due ${formatFollowUpDate(quote.follow_up_date)}`;
+                return (
+                  <Link
+                    className={`follow-up-item follow-up-${state}`}
+                    href={`/quotes/${quote.id}`}
+                    key={quote.id}
+                  >
+                    <span className="follow-up-item-copy">
+                      <strong>{quote.description}</strong>
+                      <span>{quote.quote_number} · {formatEuro(Number(quote.total))}</span>
+                    </span>
+                    <span className="follow-up-item-date">
+                      <span className="badge">{stateLabel}</span>
+                      <time dateTime={quote.follow_up_date}>
+                        {formatFollowUpDate(quote.follow_up_date)}
+                      </time>
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
 
       <section className="getting-started">
         <div className="getting-started-heading">
