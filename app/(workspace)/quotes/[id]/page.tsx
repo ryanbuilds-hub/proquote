@@ -180,6 +180,7 @@ export default async function QuoteDetailPage({
               currentStatus={quote.status}
               currentFollowUpDate={quote.follow_up_date}
               canChangeStatus={!existingInvoice}
+              canChangeFollowUpDate={!existingInvoice}
               quoteText={quoteText}
             />
             <p className="note pdf-help">

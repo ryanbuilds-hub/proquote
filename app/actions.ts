@@ -279,7 +279,12 @@ export async function updateQuote(
     .eq("business_id", business.id)
     .select("id")
     .maybeSingle();
-  if (error) return { ok: false, error: `Could not update quote: ${error.message}` };
+  if (error) {
+    if (error.message === "invoice_quote_locked") {
+      return { ok: false, error: "This accepted quote has an invoice and can no longer be edited." };
+    }
+    return { ok: false, error: `Could not update quote: ${error.message}` };
+  }
   if (!data) return { ok: false, error: "Quote not found in your account." };
 
   revalidatePath(`/quotes/${quoteId}`);
@@ -318,7 +323,12 @@ export async function updateQuoteStatus(
     .eq("business_id", business.id)
     .select("id")
     .maybeSingle();
-  if (error) return { ok: false, error: `Could not update quote: ${error.message}` };
+  if (error) {
+    if (error.message === "invoice_quote_locked") {
+      return { ok: false, error: "This quote already has an invoice, so its status cannot be changed." };
+    }
+    return { ok: false, error: `Could not update quote: ${error.message}` };
+  }
   if (!data) return { ok: false, error: "Quote not found in your account." };
 
   revalidatePath(`/quotes/${quoteId}`);
@@ -344,6 +354,22 @@ export async function updateQuoteFollowUpDate(
     return { ok: false, error: "Choose a valid follow-up date." };
   }
 
+  const { data: existingInvoice, error: invoiceError } = await supabase
+    .from("invoices")
+    .select("id")
+    .eq("business_id", business.id)
+    .eq("quote_id", quoteId)
+    .maybeSingle();
+  if (invoiceError) {
+    return { ok: false, error: `Could not check for an existing invoice: ${invoiceError.message}` };
+  }
+  if (existingInvoice) {
+    return {
+      ok: false,
+      error: "This quote already has an invoice, so its follow-up reminder cannot be changed.",
+    };
+  }
+
   const { data, error } = await supabase
     .from("quotes")
     .update({ follow_up_date: followUpDate })
@@ -351,7 +377,15 @@ export async function updateQuoteFollowUpDate(
     .eq("business_id", business.id)
     .select("id")
     .maybeSingle();
-  if (error) return { ok: false, error: `Could not save follow-up reminder: ${error.message}` };
+  if (error) {
+    if (error.message === "invoice_quote_locked") {
+      return {
+        ok: false,
+        error: "This quote already has an invoice, so its follow-up reminder cannot be changed.",
+      };
+    }
+    return { ok: false, error: `Could not save follow-up reminder: ${error.message}` };
+  }
   if (!data) return { ok: false, error: "Quote not found in your account." };
 
   revalidatePath(`/quotes/${quoteId}`);

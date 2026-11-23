@@ -20,6 +20,7 @@ export function QuoteDetailActions({
   currentStatus,
   currentFollowUpDate,
   canChangeStatus,
+  canChangeFollowUpDate,
   quoteText,
 }: {
   quoteId: string;
@@ -27,6 +28,7 @@ export function QuoteDetailActions({
   currentStatus: QuoteStatus;
   currentFollowUpDate: string | null;
   canChangeStatus: boolean;
+  canChangeFollowUpDate: boolean;
   quoteText: string;
 }) {
   const router = useRouter();
@@ -98,26 +100,28 @@ export function QuoteDetailActions({
         </div>
       )}
 
-      <div className="detail-reminder-control">
-        <label htmlFor="quote-follow-up-date">Follow-up reminder</label>
-        <p className="muted">
-          Set a date. It appears on your dashboard when this quote is marked Sent and is due within seven days.
-        </p>
-        <input
-          id="quote-follow-up-date"
-          type="date"
-          value={followUpDate}
-          onChange={(event) => setFollowUpDate(event.target.value)}
-        />
-        <button
-          className="button button-secondary"
-          type="button"
-          onClick={saveFollowUpDate}
-          disabled={pending || followUpDate === (currentFollowUpDate ?? "")}
-        >
-          {pending ? "Saving…" : followUpDate ? "Save reminder" : "Clear reminder"}
-        </button>
-      </div>
+      {canChangeFollowUpDate && (
+        <div className="detail-reminder-control">
+          <label htmlFor="quote-follow-up-date">Follow-up reminder</label>
+          <p className="muted">
+            Set a date. It appears on your dashboard when this quote is marked Sent and is due within seven days.
+          </p>
+          <input
+            id="quote-follow-up-date"
+            type="date"
+            value={followUpDate}
+            onChange={(event) => setFollowUpDate(event.target.value)}
+          />
+          <button
+            className="button button-secondary"
+            type="button"
+            onClick={saveFollowUpDate}
+            disabled={pending || followUpDate === (currentFollowUpDate ?? "")}
+          >
+            {pending ? "Saving…" : followUpDate ? "Save reminder" : "Clear reminder"}
+          </button>
+        </div>
+      )}
 
       <div className="detail-share-actions">
         <button className="button button-secondary" type="button" onClick={downloadPdf}>
